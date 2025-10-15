@@ -73,3 +73,6 @@ crashlytics-build.properties
 # Temporary auto-generated Android Assets
 /[Aa]ssets/[Ss]treamingAssets/aa.meta
 /[Aa]ssets/[Ss]treamingAssets/aa/*
+Assets/Scenes/SampleScene/SampleScene Baking Set-Default.CellData.bytes
+Assets/Scenes/SampleScene/SampleScene Baking Set-Default.CellOptionalData.bytes
+Assets/Scenes/SampleScene/SampleScene Baking Set.CellSupportData.bytes
