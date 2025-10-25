@@ -28,6 +28,18 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
+        #region Exception 1: Check if PlayerController script is attached to Player GameObject
+        var player = GameObject.FindWithTag("Player");
+        if (player == null || player.GetComponent<PlayerController>() == null)
+        {
+            Debug.LogError("PlayerController script is missing from the Player GameObject!");
+            Application.Quit();
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.isPlaying = false;
+#endif
+            #endregion
+        }
+
         try
         {
             cc = GetComponent<CharacterController>();
