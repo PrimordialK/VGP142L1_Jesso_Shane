@@ -12,8 +12,14 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     [SerializeField] private float speed = 5f;
     [SerializeField] private float rotationSpeed = 5.0f;
 
+    [Header("Jump Settings")]
+    [SerializeField] private float jumpHeight = 2.0f;
+    [SerializeField] private float timeToJumpApex = 0.4f;
+
     //Movement variables
-    Vector3 gravity = Physics.gravity;
+    float gravity;
+    float initialJumpVelocity;
+
     Vector2 direction; //direction of movement - no gravity is applied here
     Vector3 velocity;
 
@@ -28,18 +34,6 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        #region Exception 1: Check if PlayerController script is attached to Player GameObject
-        var player = GameObject.FindWithTag("Player");
-        if (player == null || player.GetComponent<PlayerController>() == null)
-        {
-            Debug.LogError("PlayerController script is missing from the Player GameObject!");
-            Application.Quit();
-#if UNITY_EDITOR
-            UnityEditor.EditorApplication.isPlaying = false;
-#endif
-            #endregion
-        }
-
         try
         {
             cc = GetComponent<CharacterController>();
@@ -56,8 +50,14 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         }
 
         mainCamera = Camera.main;
+        CalculateJumpVariables();
     }
 
+    
+    void OnValidate()
+    {
+        CalculateJumpVariables();
+    }
 
     void OnEnable()
     { 
@@ -125,29 +125,47 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     
     // Update is called once per frame
     void Update()
-    {       
+    {
+        int raysPerAxis = 12; // Number of rays per axis (total rays = raysPerAxis * raysPerAxis)
+        float coneAngle = 45f; // Half-angle of the cone in degrees
+        float maxDistance = 30f;
 
-        //Vector3 moveVel = new Vector3(hInput * speed, Physics.gravity.y, vInput * speed);
+        Vector3 origin = transform.position;
+        Vector3 forward = transform.forward;
 
-        //moveVel *= Time.deltaTime;
+        for (int y = 0; y < raysPerAxis; y++)
+        {
+            // Vertical angle from -coneAngle to +coneAngle
+            float verticalAngle = -coneAngle + (2 * coneAngle) * ((float)y / (raysPerAxis - 1));
+            Quaternion verticalRot = Quaternion.AngleAxis(verticalAngle, transform.right);
 
+            for (int x = 0; x < raysPerAxis; x++)
+            {
+                // Horizontal angle from -coneAngle to +coneAngle
+                float horizontalAngle = -coneAngle + (2 * coneAngle) * ((float)x / (raysPerAxis - 1));
+                Quaternion horizontalRot = Quaternion.AngleAxis(horizontalAngle, transform.up);
 
-        //cc.Move(moveVel);
+                // Combine rotations to get direction
+                Vector3 direction = horizontalRot * verticalRot * forward;
 
-        
+                Debug.DrawRay(origin, direction * maxDistance, Color.cyan, 0.1f);
 
+                // Raycast for detection
+                if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDistance, LayerMask.GetMask("Enemy")))
+                {
+                    Debug.Log("Enemy detected in 3D cone: " + hit.collider.name);
+                }
+            }
+        }
     }
 
     void FixedUpdate()
     {
         //apply movement
         Vector3 projectedMoveDir = ProjectedMoveDirection();
-        velocity = projectedMoveDir * speed;
-        velocity.y = gravity.y;
+        UpdateCharacterVelocity(projectedMoveDir);
 
-        velocity *= Time.fixedDeltaTime;
-
-        cc.Move(velocity);
+        cc.Move(velocity * Time.fixedDeltaTime);
 
         //apply rotation
         if (direction != Vector2.zero)
@@ -157,6 +175,16 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         }
     }
 
+    #region MovementCalculations
+    private void UpdateCharacterVelocity(Vector3 projectedMoveDir)
+    {
+        velocity.x = projectedMoveDir.x * speed;
+        velocity.z = projectedMoveDir.z * speed;
+
+        if (!cc.isGrounded) velocity.y += gravity * Time.fixedDeltaTime;
+        else velocity.y = CheckJump();
+        
+    }    
     private Vector3 ProjectedMoveDirection()
     {
         Vector3 cameraFwd = mainCamera.transform.forward;
@@ -169,5 +197,23 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         cameraRight.Normalize();
 
         return cameraFwd * direction.y + cameraRight * direction.x;
+    }
+    #endregion
+
+    #region JumpCalculations
+    float CheckJump() => jumpPressed ? initialJumpVelocity : -cc.skinWidth;
+    void CalculateJumpVariables()
+    {
+        gravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+        initialJumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
+    }
+    #endregion
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.layer == LayerMask.GetMask("Enemy"))
+        {
+            Debug.Log("Hit an enemy!");
+        }
     }
 }
