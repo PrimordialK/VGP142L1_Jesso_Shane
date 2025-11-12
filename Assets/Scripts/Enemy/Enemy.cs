@@ -1,71 +1,130 @@
 using UnityEngine;
+using UnityEngine.AI;
 
-[RequireComponent(typeof(SpriteRenderer), typeof(Animator))]
 public class Enemy : MonoBehaviour
 {
-    public AudioClip deathSound;
-    private AudioSource audioSource;
-    protected Collider col;
-    protected SpriteRenderer sr;
-    protected Animator anim;
-    protected int health;
-
-    [SerializeField] private int maxHealth = 5;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    protected virtual void Start()
+    public enum EnemyState
     {
+        Chase, Patrol
+    }    
 
-        if (deathSound != null)
-        {
+    //components
+    NavMeshAgent agent;
+    Transform target;
+    Animator anim;
 
-            TryGetComponent(out audioSource);
+    Transform playerTransform;
 
-            if (audioSource == null)
-            {
-                audioSource = gameObject.AddComponent<AudioSource>();
-                Debug.Log("AudioSource component was missing. Added one dynamically.");
-            }
-        }
-        sr = GetComponent<SpriteRenderer>();
-        anim = GetComponent<Animator>();
+    public EnemyState currentState;
+    public Transform[] patrolPoints;
+    public int pathIndex;
+    public float distThreshold = 0.2f;
 
-        if (maxHealth <= 0)
-        {
-            Debug.Log("maxHealth must be greater than 0. Setting to 5.");
-            maxHealth = 5;
-        }
-        health = maxHealth;
+    [Header("Gizmos")]
+    [SerializeField] private float redGizmoRadius = 1.0f; // Serialized field for red sphere radius
+    [SerializeField] private float greenGizmoRadius = 2.0f; // Serialized field for green sphere radius
+
+    private bool hasBeenPunched = false; // Prevents repeated triggers per attack
+
+    // Animation trigger names
+    private readonly string[] hitTriggers = { "Hit1", "Hit2", "Hit3" };
+
+    void Start()
+    {
+        agent = GetComponent<NavMeshAgent>();
+        playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
+        anim = GetComponentInChildren<Animator>();
     }
 
-    // Update is called once per frame
-    public virtual void TakeDamage(int damageValue, DamageType damagetype = DamageType.Default)
+    void Update()
     {
-        health -= damageValue;
-
-        if (health <= 0)
+        bool playerNearby = false;
+        if (playerTransform != null)
         {
-            anim.SetTrigger("Death");
-
-            if (transform.parent != null)
-            {
-                GetComponent<SpriteRenderer>().enabled = false;
-                GetComponent<Collider>().enabled = false;
-                Destroy(transform.parent.gameObject, 5.0f);
-            }
-            else
-            {
-                GetComponent<SpriteRenderer>().enabled = false;
-                GetComponent<Collider>().enabled = false;
-                Destroy(gameObject, 5.0f);
-            }
-            audioSource?.PlayOneShot(deathSound);
+            float distance = Vector3.Distance(transform.position, playerTransform.position);
+            playerNearby = distance <= redGizmoRadius;
         }
+
+        anim.SetBool("PlayerNearby", playerNearby);
+
+        if (playerNearby)
+        {
+            agent.isStopped = true;
+            agent.velocity = Vector3.zero;
+        }
+        else
+        {
+            agent.isStopped = false;
+
+            if (currentState == EnemyState.Chase)
+            {
+                ChasePlayer();
+            }
+            else if (currentState == EnemyState.Patrol)
+            {
+                Patrol();
+            }
+
+            if (!target) throw new System.Exception("Enemy has no target set!");
+            agent.SetDestination(target.position);
+        }
+
+        // Update speed parameter for blend tree
+        anim.SetFloat("speed", agent.velocity.magnitude);
+
+        // Check for attack within green gizmo sphere
+        if (playerTransform != null)
+        {
+            float greenDistance = Vector3.Distance(transform.position, playerTransform.position);
+            PlayerController playerController = playerTransform.GetComponent<PlayerController>();
+            if (playerController != null)
+            {
+                if (greenDistance <= greenGizmoRadius && playerController.IsAttacking && !hasBeenPunched)
+                {
+                    if (anim != null)
+                    {
+                        int randomIndex = Random.Range(0, hitTriggers.Length);
+                        anim.SetTrigger(hitTriggers[randomIndex]);
+                        Debug.Log($"Enemy hit by player within green gizmo sphere! Triggered: {hitTriggers[randomIndex]}");
+                    }
+                    hasBeenPunched = true;
+                }
+                else if (greenDistance > greenGizmoRadius || !playerController.IsAttacking)
+                {
+                    hasBeenPunched = false; // Reset for next attack
+                }
+            }
+        }
+    }
+
+    void ChasePlayer()
+    {
+        if (!playerTransform) return;
+        target = playerTransform;
+        Debug.Log($"ChasePlayer called. Target position: {target.position}");
+    }
+
+    void Patrol()
+    {
+        if (target == playerTransform) target = patrolPoints[pathIndex];
+        if (agent.remainingDistance < distThreshold)
+        {
+            pathIndex++;
+            pathIndex %= patrolPoints.Length;
+            target = patrolPoints[pathIndex];
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, redGizmoRadius);
+        Gizmos.color = Color.green;
+        Gizmos.DrawWireSphere(transform.position, greenGizmoRadius);
     }
 }
 
-public enum DamageType
-{
-    Default,
-    JumpedOn
-}
+
+
+
 

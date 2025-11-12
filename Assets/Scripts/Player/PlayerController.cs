@@ -1,15 +1,24 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
+using UnityEngine.InputSystem.XR.Haptics;
+using UnityEngine.Rendering;
 
-public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerActions
+public class PlayerController : MonoBehaviour
 {
-
-    private InputSystem_Actions input;                  // Source code representation of asset.
     private CharacterController cc;
     private Camera mainCamera;
+    private Animator anim;
+    private WeaponBase curWeapon = null;
 
+    [SerializeField] private Transform weaponAttachPoint;
+
+    LayerMask weaponLayerMask;
+    LayerMask enemyLayerMask;
+
+    private float curSpeed = 2.0f;
     [Header("Movement Settings")]
-    [SerializeField] private float speed = 5f;
+    [SerializeField] private float initSpeed = 2.0f;
+    [SerializeField] private float maxSpeed = 15.0f;
+    [SerializeField] private float moveAccel = 2f;
     [SerializeField] private float rotationSpeed = 5.0f;
 
     [Header("Jump Settings")]
@@ -25,18 +34,15 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
     bool jumpPressed = false;
 
-    void Awake()
-    {
-        input = new InputSystem_Actions();
-        input.Player.SetCallbacks(this);
-    }
-    
+    private bool canAttack = true;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
         try
         {
             cc = GetComponent<CharacterController>();
+            anim = GetComponentInChildren<Animator>();
             if (cc == null) throw new UnassignedReferenceException("CharacterController component is not assigned!");
         }
         catch (UnassignedReferenceException e)
@@ -51,6 +57,18 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
         mainCamera = Camera.main;
         CalculateJumpVariables();
+
+        //Layer 6 is Weapons
+        //LayerMask.GetMask("Weapon") seems to be inconsistent (in testing it was pulling layer 64) - setting it directly works better
+        weaponLayerMask = 6;
+        enemyLayerMask = 3;
+
+        InputManager.Instance.OnMoveEvent += OnMove;
+        InputManager.Instance.OnJumpEvent += OnJump;
+        InputManager.Instance.OnDropEvent += OnDrop;
+        InputManager.Instance.OnAttackEvent += OnAttack;
+        InputManager.Instance.OnDefendEvent += OnDefend;
+        InputManager.Instance.OnDeathEvent += OnDeath;
     }
 
     
@@ -59,104 +77,78 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         CalculateJumpVariables();
     }
 
-    void OnEnable()
-    { 
-        input.Enable();
-    }
-    void OnDisable()
+    public void OnJump(bool pressed) => jumpPressed = pressed;
+    public void OnMove(Vector2 movementDir) => direction = movementDir;
+
+    public void OnDrop(bool pressed)
     {
-        input.Disable();
-    }
-
-    void OnDestroy()
-    {
-        input.Dispose();
-    }
-
-
-    public void OnAttack(InputAction.CallbackContext context)
-    {
-        //throw new System.NotImplementedException();
-    }
-
-    public void OnCrouch(InputAction.CallbackContext context)
-    {
-        //throw new System.NotImplementedException();
-    }
-
-    public void OnInteract(InputAction.CallbackContext context)
-    {
-        //throw new System.NotImplementedException();
-    }
-
-    public void OnJump(InputAction.CallbackContext context) => jumpPressed = context.ReadValueAsButton();
-
-    public void OnLook(InputAction.CallbackContext context)
-    {
-        //throw new System.NotImplementedException();
-    }
-
-    public void OnMove(InputAction.CallbackContext context)
-    {
-        if (context.started || context.performed)
+        if (pressed && curWeapon != null)
         {
-            direction = context.ReadValue<Vector2>();
-            return;
+            curWeapon.Drop(GetComponent<Collider>());
+            curWeapon = null;
         }
-        
-        direction = Vector2.zero;
     }
 
-    public void OnNext(InputAction.CallbackContext context)
+    public bool IsAttacking { get; private set; }
+
+    public void OnAttack()
     {
-        //throw new System.NotImplementedException();
+        if (anim != null)
+            anim.SetTrigger("Attack1");
+        IsAttacking = true;
     }
 
-    public void OnPrevious(InputAction.CallbackContext context)
+    public void OnDefend(bool isDefending)
     {
-        //throw new System.NotImplementedException();
+        Debug.Log("Defend input: " + isDefending);
+        if (anim != null)
+            anim.SetBool("IsDefending", isDefending);
     }
 
-    public void OnSprint(InputAction.CallbackContext context)
+    public void OnDeath()
     {
-        //throw new System.NotImplementedException();
+        if (anim != null)
+            anim.SetTrigger("Death");
+
+        StartCoroutine(RestartGameAfterDeathAnimation());
     }
 
-    
-    // Update is called once per frame
-    void Update()
+    private System.Collections.IEnumerator RestartGameAfterDeathAnimation()
     {
-        int raysPerAxis = 12; // Number of rays per axis (total rays = raysPerAxis * raysPerAxis)
-        float coneAngle = 45f; // Half-angle of the cone in degrees
-        float maxDistance = 30f;
+        float deathAnimLength = 1.0f; // Default duration
 
-        Vector3 origin = transform.position;
-        Vector3 forward = transform.forward;
-
-        for (int y = 0; y < raysPerAxis; y++)
+        if (anim != null)
         {
-            // Vertical angle from -coneAngle to +coneAngle
-            float verticalAngle = -coneAngle + (2 * coneAngle) * ((float)y / (raysPerAxis - 1));
-            Quaternion verticalRot = Quaternion.AngleAxis(verticalAngle, transform.right);
-
-            for (int x = 0; x < raysPerAxis; x++)
+            // Find the "Death" animation clip length
+            foreach (var clip in anim.runtimeAnimatorController.animationClips)
             {
-                // Horizontal angle from -coneAngle to +coneAngle
-                float horizontalAngle = -coneAngle + (2 * coneAngle) * ((float)x / (raysPerAxis - 1));
-                Quaternion horizontalRot = Quaternion.AngleAxis(horizontalAngle, transform.up);
-
-                // Combine rotations to get direction
-                Vector3 direction = horizontalRot * verticalRot * forward;
-
-                Debug.DrawRay(origin, direction * maxDistance, Color.cyan, 0.1f);
-
-                // Raycast for detection
-                if (Physics.Raycast(origin, direction, out RaycastHit hit, maxDistance, LayerMask.GetMask("Enemy")))
+                if (clip.name == "Death")
                 {
-                    Debug.Log("Enemy detected in 3D cone: " + hit.collider.name);
+                    deathAnimLength = clip.length;
+                    break;
                 }
             }
         }
+
+        yield return new WaitForSeconds(deathAnimLength);
+        Destroy(gameObject);
+    }
+
+    // Update is called once per frame
+    void Update()
+    {   
+        Ray newRay = new Ray(transform.position, transform.forward);
+        RaycastHit hitInfo;
+
+        Debug.DrawRay(newRay.origin, newRay.direction * 10f, Color.red, 0.1f);
+
+        if (Physics.Raycast(newRay, out hitInfo, 10.0f, LayerMask.GetMask("Enemy")))
+        {
+            Debug.Log("Enemy in front of player: " + hitInfo.collider.name);
+        }
+
+        // Reset attack state after processing (or after a short time)
+        IsAttacking = false;
     }
 
     void FixedUpdate()
@@ -166,6 +158,7 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
         UpdateCharacterVelocity(projectedMoveDir);
 
         cc.Move(velocity * Time.fixedDeltaTime);
+        anim.SetFloat("speed", curSpeed / maxSpeed);
 
         //apply rotation
         if (direction != Vector2.zero)
@@ -178,8 +171,12 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
     #region MovementCalculations
     private void UpdateCharacterVelocity(Vector3 projectedMoveDir)
     {
-        velocity.x = projectedMoveDir.x * speed;
-        velocity.z = projectedMoveDir.z * speed;
+        if (direction == Vector2.zero) curSpeed = 0.0f;
+        else if (curSpeed == 0.0f) curSpeed = initSpeed;
+        else curSpeed = Mathf.MoveTowards(curSpeed, maxSpeed, moveAccel * Time.fixedDeltaTime);
+
+        velocity.x = projectedMoveDir.x * curSpeed;
+        velocity.z = projectedMoveDir.z * curSpeed;
 
         if (!cc.isGrounded) velocity.y += gravity * Time.fixedDeltaTime;
         else velocity.y = CheckJump();
@@ -211,9 +208,25 @@ public class PlayerController : MonoBehaviour, InputSystem_Actions.IPlayerAction
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        if (hit.gameObject.layer == LayerMask.GetMask("Enemy"))
+        //Debug.Log("Hit Object:" + hit.gameObject.name);
+
+        if (hit.gameObject.layer == enemyLayerMask)
         {
             Debug.Log("Hit an enemy!");
         }
+
+        if (hit.gameObject.layer == weaponLayerMask && curWeapon == null)
+        {
+            WeaponBase weapon = hit.collider.GetComponent<WeaponBase>();
+            if (weapon != null)
+            {
+                curWeapon = weapon;
+                curWeapon.Equip(GetComponent<Collider>(), weaponAttachPoint);
+            }
+
+            Debug.Log($"Picked up a weapon! {weapon}");
+        }
     }
+
+   
 }

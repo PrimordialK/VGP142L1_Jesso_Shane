@@ -4,15 +4,16 @@ using UnityEngine;
 public abstract class Singleton<T> : MonoBehaviour where T : Component
 {
     protected static T _instance;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-   public static T Instance
+    public static T Instance
     {
         get
         {
+            if (_instance) return _instance;
             try
             {
                 _instance = FindFirstObjectByType<T>();
+
+                if (!_instance) throw new UnassignedReferenceException("Input Manager is Unassiged");
             }
             catch (System.Exception e)
             {
@@ -21,12 +22,10 @@ public abstract class Singleton<T> : MonoBehaviour where T : Component
                 _instance = obj.AddComponent<T>();
                 DontDestroyOnLoad(_instance);
             }
+
             return _instance;
         }
-       
     }
-
-    // Update is called once per frame
     private void Awake()
     {
         if (!_instance)
@@ -35,5 +34,7 @@ public abstract class Singleton<T> : MonoBehaviour where T : Component
             DontDestroyOnLoad(_instance);
             return;
         }
+
+        Destroy(gameObject);
     }
 }

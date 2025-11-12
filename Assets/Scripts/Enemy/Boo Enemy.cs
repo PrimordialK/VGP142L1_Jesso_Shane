@@ -9,9 +9,8 @@ public class BooEnemy : Enemy
     private float shootCooldown = 3.0f; // seconds between shots
     private float lastShootTime = -Mathf.Infinity;
 
-    protected override void Start()
-    {
-        base.Start();
+    void Start()
+    {// base.Start();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
         if (player == null)
             Debug.LogError("Player not found in scene!");
@@ -21,7 +20,7 @@ public class BooEnemy : Enemy
         if (enemyShoot == null)
             Debug.LogWarning("EnemyShoot component not found on BooEnemy!");
 
-        sr = GetComponent<SpriteRenderer>();
+        
 
         // Get SkinnedMeshRenderer from child
         smr = GetComponentInChildren<SkinnedMeshRenderer>();
