@@ -13,9 +13,10 @@ GameObject:
   - component: {fileID: 8040478632773958585}
   - component: {fileID: 3080446323398633246}
   - component: {fileID: 8405666816862208433}
-  m_Layer: 0
+  - component: {fileID: -2434500183955645095}
+  m_Layer: 7
   m_Name: Cube
-  m_TagString: Enemy
+  m_TagString: PowerUp
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -139,3 +140,15 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
+--- !u!114 &-2434500183955645095
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 776552875479629072}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 673440f09ffcd8541b959f3664ab55f0, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PowerUp

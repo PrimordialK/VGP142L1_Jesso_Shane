@@ -8,6 +8,7 @@ public class EnemyShoot : MonoBehaviour
     private AudioSource audioSource;
     [SerializeField] private float shotSpeed = 10.0f;
     [SerializeField] private Projectile projectilePrefab = null;
+    [SerializeField] private Transform projectileSpawnPoint = null;
 
     void Start()
     {
@@ -32,9 +33,10 @@ public class EnemyShoot : MonoBehaviour
     {
         if (projectilePrefab == null) return;
 
-        // Spawn at the front of the object
-        Vector3 spawnPos = transform.position + transform.forward;
-        Projectile curProjectile = Instantiate(projectilePrefab, spawnPos, Quaternion.identity);
+        // Spawn at the specified projectile spawn point or at the front of the object
+        Vector3 spawnPos = projectileSpawnPoint != null ? projectileSpawnPoint.position : transform.position + transform.forward;
+        Quaternion spawnRot = projectileSpawnPoint != null ? projectileSpawnPoint.rotation : Quaternion.identity;
+        Projectile curProjectile = Instantiate(projectilePrefab, spawnPos, spawnRot);
 
         // Set velocity in the forward direction
         Vector3 velocity = transform.forward * shotSpeed;

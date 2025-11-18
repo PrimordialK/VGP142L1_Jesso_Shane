@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 [RequireComponent(typeof(Rigidbody), typeof(Animator))]
 public class Projectile : MonoBehaviour
@@ -24,25 +25,48 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
+       
         if (projectileType == ProjectileType.Player && collision.gameObject.CompareTag("Enemy"))
         {
             Enemy enemy = collision.gameObject.GetComponent<Enemy>();
             if (enemy != null)
             {
-                
                 Destroy(gameObject);
             }
         }
 
         if (projectileType == ProjectileType.Enemy && collision.gameObject.CompareTag("Player"))
         {
+            PlayerController player = collision.gameObject.GetComponent<PlayerController>();
+            if (player != null && player.IsDefending)
+            {
+                Destroy(gameObject);
+                return;
+            }
+
+
             GameManager.Instance.lives--;
 
             Debug.Log("Player hit! Lives left: " + GameManager.Instance.lives);
-            GameManager.Instance.ReloadCurrentScene();
+
+            if (player != null)
+            {
+                player.OnDeath(); // Play death animation
+                StartCoroutine(ReloadSceneAfterDelay(5f));
+            }
+            else
+            {
+                GameManager.Instance.ReloadCurrentScene();
+            }
 
             Destroy(gameObject);
         }
+    }
+
+    private IEnumerator ReloadSceneAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        GameManager.Instance.ReloadCurrentScene();
     }
 
     public enum ProjectileType

@@ -15,7 +15,6 @@ GameObject:
   - component: {fileID: 2602915634643876506}
   - component: {fileID: 1303145002728603925}
   - component: {fileID: 2123781579379138503}
-  - component: {fileID: 2655058520710494799}
   m_Layer: 0
   m_Name: Plane
   m_TagString: Untagged
@@ -186,19 +185,3 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &2655058520710494799
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1195832247215224300}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: c6c70cf3770830d488a4311373e59d52, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::Projectile
-  projectileType: 1
-  gravityScale: 0
-  lifetime: 1
-  deathSound: {fileID: 0}

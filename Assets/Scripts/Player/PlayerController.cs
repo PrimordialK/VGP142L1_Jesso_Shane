@@ -22,8 +22,9 @@ public class PlayerController : MonoBehaviour
     [SerializeField] private float rotationSpeed = 5.0f;
 
     [Header("Jump Settings")]
-    [SerializeField] private float jumpHeight = 2.0f;
+    [SerializeField] public float jumpHeight = 2.0f;
     [SerializeField] private float timeToJumpApex = 0.4f;
+    
 
     //Movement variables
     float gravity;
@@ -34,7 +35,7 @@ public class PlayerController : MonoBehaviour
 
     bool jumpPressed = false;
 
-    private bool canAttack = true;
+    
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -98,11 +99,14 @@ public class PlayerController : MonoBehaviour
         IsAttacking = true;
     }
 
+    public bool IsDefending { get; private set; }
+
     public void OnDefend(bool isDefending)
     {
         Debug.Log("Defend input: " + isDefending);
         if (anim != null)
             anim.SetBool("IsDefending", isDefending);
+        IsDefending = isDefending;
     }
 
     public void OnDeath()
@@ -131,7 +135,9 @@ public class PlayerController : MonoBehaviour
         }
 
         yield return new WaitForSeconds(deathAnimLength);
-        Destroy(gameObject);
+
+        // Reload the scene after the death animation
+        GameManager.Instance.ReloadCurrentScene();
     }
 
     // Update is called once per frame
@@ -204,16 +210,19 @@ public class PlayerController : MonoBehaviour
         gravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
         initialJumpVelocity = Mathf.Abs(gravity) * timeToJumpApex;
     }
+
+    void JumpForceChange()
+    {
+        jumpHeight *= 5f;
+        CalculateJumpVariables();
+    }
     #endregion
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
         //Debug.Log("Hit Object:" + hit.gameObject.name);
 
-        if (hit.gameObject.layer == enemyLayerMask)
-        {
-            Debug.Log("Hit an enemy!");
-        }
+        
 
         if (hit.gameObject.layer == weaponLayerMask && curWeapon == null)
         {
@@ -225,6 +234,14 @@ public class PlayerController : MonoBehaviour
             }
 
             Debug.Log($"Picked up a weapon! {weapon}");
+        }
+
+        // PowerUp collision logic
+        if (hit.gameObject.CompareTag("PowerUp"))
+        {
+            JumpForceChange();
+            Destroy(hit.gameObject);
+            Debug.Log("PowerUp collected: Jump force increased!");
         }
     }
 

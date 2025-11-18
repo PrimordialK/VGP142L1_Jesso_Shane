@@ -5,6 +5,9 @@ TagManager:
   serializedVersion: 3
   tags:
   - Enemy
+  - Weapon
+  - Shield
+  - PowerUp
   layers:
   - Default
   - TransparentFX
@@ -12,8 +15,8 @@ TagManager:
   - Enemy
   - Water
   - UI
-  - 
-  - 
+  - Weapon
+  - PowerUp
   - 
   - 
   - 

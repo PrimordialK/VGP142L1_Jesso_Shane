@@ -12,6 +12,7 @@ public class Enemy : MonoBehaviour
     NavMeshAgent agent;
     Transform target;
     Animator anim;
+    EnemyShoot shootScript; // Reference to the shoot script
 
     Transform playerTransform;
 
@@ -22,18 +23,18 @@ public class Enemy : MonoBehaviour
 
     [Header("Gizmos")]
     [SerializeField] private float redGizmoRadius = 1.0f; // Serialized field for red sphere radius
-    [SerializeField] private float greenGizmoRadius = 2.0f; // Serialized field for green sphere radius
 
-    private bool hasBeenPunched = false; // Prevents repeated triggers per attack
+    [Header("Drop Settings")]
+    [SerializeField] private GameObject itemDropPrefab; // Assign your item prefab in the Inspector
 
-    // Animation trigger names
-    private readonly string[] hitTriggers = { "Hit1", "Hit2", "Hit3" };
+    private bool isDead = false;
 
     void Start()
     {
         agent = GetComponent<NavMeshAgent>();
         playerTransform = GameObject.FindGameObjectWithTag("Player").transform;
         anim = GetComponentInChildren<Animator>();
+        shootScript = GetComponent<EnemyShoot>(); // Get the shoot script attached to this enemy
     }
 
     void Update()
@@ -51,6 +52,12 @@ public class Enemy : MonoBehaviour
         {
             agent.isStopped = true;
             agent.velocity = Vector3.zero;
+
+            // Shoot at the player when within the red gizmo radius
+            if (shootScript != null)
+            {
+                shootScript.Fire();
+            }
         }
         else
         {
@@ -71,30 +78,6 @@ public class Enemy : MonoBehaviour
 
         // Update speed parameter for blend tree
         anim.SetFloat("speed", agent.velocity.magnitude);
-
-        // Check for attack within green gizmo sphere
-        if (playerTransform != null)
-        {
-            float greenDistance = Vector3.Distance(transform.position, playerTransform.position);
-            PlayerController playerController = playerTransform.GetComponent<PlayerController>();
-            if (playerController != null)
-            {
-                if (greenDistance <= greenGizmoRadius && playerController.IsAttacking && !hasBeenPunched)
-                {
-                    if (anim != null)
-                    {
-                        int randomIndex = Random.Range(0, hitTriggers.Length);
-                        anim.SetTrigger(hitTriggers[randomIndex]);
-                        Debug.Log($"Enemy hit by player within green gizmo sphere! Triggered: {hitTriggers[randomIndex]}");
-                    }
-                    hasBeenPunched = true;
-                }
-                else if (greenDistance > greenGizmoRadius || !playerController.IsAttacking)
-                {
-                    hasBeenPunched = false; // Reset for next attack
-                }
-            }
-        }
     }
 
     void ChasePlayer()
@@ -119,10 +102,37 @@ public class Enemy : MonoBehaviour
     {
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(transform.position, redGizmoRadius);
-        Gizmos.color = Color.green;
-        Gizmos.DrawWireSphere(transform.position, greenGizmoRadius);
+    }
+
+    public void OnShoot()
+    {
+        if (shootScript != null)
+        {
+            shootScript.Fire();
+            Debug.Log("Animation event: Enemy fired projectile.");
+        }
+    }
+
+    public void Die()
+    {
+        if (isDead) return; // Prevent multiple deaths
+        isDead = true;
+
+        if (anim != null)
+            anim.SetTrigger("Death"); // Play death animation
+
+        // Drop item at enemy's position
+        if (itemDropPrefab != null)
+        {
+            Instantiate(itemDropPrefab, transform.position, Quaternion.identity);
+        }
+
+        Destroy(gameObject, 2.0f); // Destroy after animation (adjust delay as needed)
     }
 }
+
+
+
 
 
 
