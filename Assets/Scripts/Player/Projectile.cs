@@ -25,13 +25,13 @@ public class Projectile : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-       
         if (projectileType == ProjectileType.Player && collision.gameObject.CompareTag("Enemy"))
         {
             Enemy enemy = collision.gameObject.GetComponent<Enemy>();
             if (enemy != null)
             {
-                Destroy(gameObject);
+                enemy.Die(); // Play death animation and destroy after
+                Destroy(gameObject); // Destroy the projectile
             }
         }
 

@@ -1,6 +1,6 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
---- !u!1 &1011401472670668688
+--- !u!1 &5640860616024009599
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -8,50 +8,50 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 2588413100276903418}
-  - component: {fileID: 7706823356149678811}
-  - component: {fileID: 8451985465656395886}
-  - component: {fileID: 6093674556668538474}
-  - component: {fileID: 5336319753854961193}
-  - component: {fileID: 2391739226200734081}
-  - component: {fileID: 3976236075215910432}
+  - component: {fileID: 3503623203516280477}
+  - component: {fileID: 1460634824026367878}
+  - component: {fileID: 8253124050431797202}
+  - component: {fileID: 7853611929624919166}
+  - component: {fileID: 8180204065635673650}
+  - component: {fileID: 2621552556932835060}
+  - component: {fileID: -8034024819006031397}
   m_Layer: 0
-  m_Name: Sphere
+  m_Name: HadukanProjectile 1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &2588413100276903418
+--- !u!4 &3503623203516280477
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 97.03, y: 13.20282, z: 131.7}
-  m_LocalScale: {x: 1, y: 0.4, z: 1}
+  m_LocalPosition: {x: 103.97, y: 14.98, z: 133.44}
+  m_LocalScale: {x: 0.2884743, y: 0.25923184, z: 0.27552676}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!33 &7706823356149678811
+--- !u!33 &1460634824026367878
 MeshFilter:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   m_Mesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
---- !u!23 &8451985465656395886
+--- !u!23 &8253124050431797202
 MeshRenderer:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   m_Enabled: 1
   m_CastShadows: 1
   m_ReceiveShadows: 1
@@ -93,13 +93,13 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
---- !u!135 &6093674556668538474
+--- !u!135 &7853611929624919166
 SphereCollider:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   m_Material: {fileID: 0}
   m_IncludeLayers:
     serializedVersion: 2
@@ -114,13 +114,13 @@ SphereCollider:
   serializedVersion: 3
   m_Radius: 0.5
   m_Center: {x: 0, y: 0, z: 0}
---- !u!54 &5336319753854961193
+--- !u!54 &8180204065635673650
 Rigidbody:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   serializedVersion: 5
   m_Mass: 1
   m_LinearDamping: 0
@@ -141,14 +141,14 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 4
   m_CollisionDetection: 0
---- !u!95 &2391739226200734081
+--- !u!95 &2621552556932835060
 Animator:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   m_Enabled: 1
   m_Avatar: {fileID: 0}
   m_Controller: {fileID: 0}
@@ -163,13 +163,13 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
---- !u!114 &3976236075215910432
+--- !u!114 &-8034024819006031397
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1011401472670668688}
+  m_GameObject: {fileID: 5640860616024009599}
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c6c70cf3770830d488a4311373e59d52, type: 3}
@@ -177,5 +177,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Projectile
   projectileType: 0
   gravityScale: 0
-  lifetime: 2.9
+  lifetime: 3.6
   deathSound: {fileID: 0}

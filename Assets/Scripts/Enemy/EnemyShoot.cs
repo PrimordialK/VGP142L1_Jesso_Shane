@@ -44,4 +44,15 @@ public class EnemyShoot : MonoBehaviour
 
         audioSource?.PlayOneShot(shootSound);
     }
+
+    public void Fire(GameObject projectilePrefab, Vector3 position, Quaternion rotation)
+    {
+        if (projectilePrefab != null)
+        {
+            Instantiate(projectilePrefab, position, rotation);
+            // Optionally: play sound, set velocity, etc.
+            if (audioSource != null && shootSound != null)
+                audioSource.PlayOneShot(shootSound);
+        }
+    }
 }

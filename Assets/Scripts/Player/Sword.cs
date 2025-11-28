@@ -2,14 +2,11 @@ using UnityEngine;
 
 public class Sword : WeaponBase
 {
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    protected override void Start() => base.Start();
+    [SerializeField] private float projectileSpeed = 15f;
 
-    // Update is called once per frame
-    void Update()
-    {
-        
-    }
+
+
+
 
     private void OnTriggerEnter(Collider other)
     {
@@ -23,4 +20,5 @@ public class Sword : WeaponBase
             }
         }
     }
+
 }

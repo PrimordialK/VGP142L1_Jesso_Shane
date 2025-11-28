@@ -1,15 +1,19 @@
 using UnityEngine;
-using UnityEngine.InputSystem.XR.Haptics;
-using UnityEngine.Rendering;
+
+
 
 public class PlayerController : MonoBehaviour
 {
     private CharacterController cc;
     private Camera mainCamera;
     private Animator anim;
-    private WeaponBase curWeapon = null;
 
-    [SerializeField] private Transform weaponAttachPoint;
+
+    [SerializeField] public Transform weaponAttachPoint1; // Equipped weapon (e.g., hand)
+    [SerializeField] public Transform weaponAttachPoint2; // Holstered weapon (e.g., back/hip)
+
+    private WeaponBase equippedWeapon = null;
+    private WeaponBase holsteredWeapon = null;
 
     LayerMask weaponLayerMask;
     LayerMask enemyLayerMask;
@@ -24,11 +28,12 @@ public class PlayerController : MonoBehaviour
     [Header("Jump Settings")]
     [SerializeField] public float jumpHeight = 2.0f;
     [SerializeField] private float timeToJumpApex = 0.4f;
-    
+
 
     //Movement variables
     float gravity;
     float initialJumpVelocity;
+
 
     Vector2 direction; //direction of movement - no gravity is applied here
     Vector3 velocity;
@@ -36,6 +41,7 @@ public class PlayerController : MonoBehaviour
     bool jumpPressed = false;
 
     
+
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -70,9 +76,12 @@ public class PlayerController : MonoBehaviour
         InputManager.Instance.OnAttackEvent += OnAttack;
         InputManager.Instance.OnDefendEvent += OnDefend;
         InputManager.Instance.OnDeathEvent += OnDeath;
+        InputManager.Instance.OnSwitchWeaponsEvent += OnSwitchWeapons;
+        
+
     }
 
-    
+
     void OnValidate()
     {
         CalculateJumpVariables();
@@ -81,12 +90,17 @@ public class PlayerController : MonoBehaviour
     public void OnJump(bool pressed) => jumpPressed = pressed;
     public void OnMove(Vector2 movementDir) => direction = movementDir;
 
-    public void OnDrop(bool pressed)
+    public void OnDrop(bool dropEquipped)
     {
-        if (pressed && curWeapon != null)
+        if (dropEquipped && equippedWeapon != null)
         {
-            curWeapon.Drop(GetComponent<Collider>());
-            curWeapon = null;
+            equippedWeapon.Drop(GetComponent<Collider>());
+            equippedWeapon = null;
+        }
+        else if (!dropEquipped && holsteredWeapon != null)
+        {
+            holsteredWeapon.Drop(GetComponent<Collider>());
+            holsteredWeapon = null;
         }
     }
 
@@ -95,9 +109,12 @@ public class PlayerController : MonoBehaviour
     public void OnAttack()
     {
         if (anim != null)
-            anim.SetTrigger("Attack1");
-        IsAttacking = true;
+            anim.SetTrigger("Attack1"); // This triggers the attack animation
+
+        //if (equippedWeapon != null)
+        //    equippedWeapon.Shoot(); // If you want to keep this, but avoid double firing
     }
+    
 
     public bool IsDefending { get; private set; }
 
@@ -116,6 +133,8 @@ public class PlayerController : MonoBehaviour
 
         StartCoroutine(RestartGameAfterDeathAnimation());
     }
+
+
 
     private System.Collections.IEnumerator RestartGameAfterDeathAnimation()
     {
@@ -142,7 +161,7 @@ public class PlayerController : MonoBehaviour
 
     // Update is called once per frame
     void Update()
-    {   
+    {
         Ray newRay = new Ray(transform.position, transform.forward);
         RaycastHit hitInfo;
 
@@ -155,6 +174,10 @@ public class PlayerController : MonoBehaviour
 
         // Reset attack state after processing (or after a short time)
         IsAttacking = false;
+
+
+
+
     }
 
     void FixedUpdate()
@@ -186,13 +209,13 @@ public class PlayerController : MonoBehaviour
 
         if (!cc.isGrounded) velocity.y += gravity * Time.fixedDeltaTime;
         else velocity.y = CheckJump();
-        
-    }    
+
+    }
     private Vector3 ProjectedMoveDirection()
     {
         Vector3 cameraFwd = mainCamera.transform.forward;
         Vector3 cameraRight = mainCamera.transform.right;
-        
+
         cameraFwd.y = 0;
         cameraRight.y = 0;
 
@@ -220,30 +243,48 @@ public class PlayerController : MonoBehaviour
 
     private void OnControllerColliderHit(ControllerColliderHit hit)
     {
-        //Debug.Log("Hit Object:" + hit.gameObject.name);
-
-        
-
-        if (hit.gameObject.layer == weaponLayerMask && curWeapon == null)
+        WeaponBase weapon = hit.collider.GetComponent<WeaponBase>();
+        if (weapon != null)
         {
-            WeaponBase weapon = hit.collider.GetComponent<WeaponBase>();
-            if (weapon != null)
+            if (equippedWeapon == null)
             {
-                curWeapon = weapon;
-                curWeapon.Equip(GetComponent<Collider>(), weaponAttachPoint);
+                equippedWeapon = weapon;
+                equippedWeapon.Equip(GetComponent<Collider>(), weaponAttachPoint1);
             }
-
-            Debug.Log($"Picked up a weapon! {weapon}");
+            else if (holsteredWeapon == null && weapon != equippedWeapon)
+            {
+                holsteredWeapon = weapon;
+                holsteredWeapon.Equip(GetComponent<Collider>(), weaponAttachPoint2);
+            }
+            // Optionally: handle swapping if both slots are full
+            Debug.Log($"Picked up a weapon! {weapon.name}");
         }
 
-        // PowerUp collision logic
-        if (hit.gameObject.CompareTag("PowerUp"))
+        // PowerUp logic...
+    }
+    public void OnSwitchWeapons()
+    {
+        // Weapon swapping functionality removed as requested.
+        // You can add other logic here if needed.
+    }
+    public void ShootEquippedWeapon()
+    {
+        if (equippedWeapon != null && equippedWeapon.projectilePrefab != null && equippedWeapon.shootOrigin != null)
         {
-            JumpForceChange();
-            Destroy(hit.gameObject);
-            Debug.Log("PowerUp collected: Jump force increased!");
+            GameObject proj = Instantiate(
+                equippedWeapon.projectilePrefab,
+                equippedWeapon.shootOrigin.position,
+                equippedWeapon.shootOrigin.rotation
+            );
+
+            Projectile projectileScript = proj.GetComponent<Projectile>();
+            if (projectileScript != null)
+            {
+                // Choose a speed appropriate for the weapon
+                float speed = 15f; // Example: you can expose this per weapon
+                Vector3 velocity = equippedWeapon.shootOrigin.forward * speed;
+                projectileScript.SetVelocity(velocity);
+            }
         }
     }
-
-   
 }

@@ -115,19 +115,34 @@ public class Enemy : MonoBehaviour
 
     public void Die()
     {
-        if (isDead) return; // Prevent multiple deaths
-        isDead = true;
+        Animator anim = GetComponent<Animator>();
+        if (anim != null)
+        {
+            anim.SetTrigger("Death"); // Assumes you have a "Death" trigger in your Animator
+        }
+        // Optionally, disable enemy logic here (movement, attacks, etc.)
+        StartCoroutine(DestroyAfterDeathAnimation());
+    }
+
+    private System.Collections.IEnumerator DestroyAfterDeathAnimation()
+    {
+        Animator anim = GetComponent<Animator>();
+        float deathAnimLength = 1.0f; // Default duration
 
         if (anim != null)
-            anim.SetTrigger("Death"); // Play death animation
-
-        // Drop item at enemy's position
-        if (itemDropPrefab != null)
         {
-            Instantiate(itemDropPrefab, transform.position, Quaternion.identity);
+            foreach (var clip in anim.runtimeAnimatorController.animationClips)
+            {
+                if (clip.name == "Death")
+                {
+                    deathAnimLength = clip.length;
+                    break;
+                }
+            }
         }
 
-        Destroy(gameObject, 2.0f); // Destroy after animation (adjust delay as needed)
+        yield return new WaitForSeconds(deathAnimLength);
+        Destroy(gameObject);
     }
 }
 

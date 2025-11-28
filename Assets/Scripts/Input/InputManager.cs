@@ -9,6 +9,8 @@ public class InputManager : Singleton<InputManager>, InputSystem_Actions.IPlayer
     public event System.Action OnAttackEvent;
     public event System.Action<bool> OnDefendEvent;
     public event System.Action OnDeathEvent;
+    public event System.Action OnSwitchWeaponsEvent;
+    public event System.Action OnFireEvent; // Add OnFireEvent
 
     #region Input Action Callbacks
     public void OnAttack(UnityEngine.InputSystem.InputAction.CallbackContext context)
@@ -25,6 +27,19 @@ public class InputManager : Singleton<InputManager>, InputSystem_Actions.IPlayer
     public void OnInteract(UnityEngine.InputSystem.InputAction.CallbackContext context)
     {
         //throw new System.NotImplementedException();
+        Debug.Log("Interact action triggered");
+    }
+
+    public void OnFire(UnityEngine.InputSystem.InputAction.CallbackContext context) // Add OnFire method
+    {
+        if (context.started || context.performed)
+            OnFireEvent?.Invoke();
+    }
+
+    public void OnSwitchWeapons(UnityEngine.InputSystem.InputAction.CallbackContext context) 
+    {
+        if (context.started || context.performed)
+            OnSwitchWeaponsEvent?.Invoke();
     }
 
     public void OnJump(UnityEngine.InputSystem.InputAction.CallbackContext context) => OnJumpEvent?.Invoke(context.ReadValueAsButton());
