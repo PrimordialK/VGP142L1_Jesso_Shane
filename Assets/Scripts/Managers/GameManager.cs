@@ -107,14 +107,11 @@ public class GameManager : MonoBehaviour
     #endregion
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-
-    }
+    
 
     void GameOver()
     {
-        SceneManager.LoadScene(2);
+        SceneManager.LoadScene(3);
     }
 
     void Respawn()
@@ -193,5 +190,73 @@ public class GameManager : MonoBehaviour
     public void ReloadCurrentScene()
     {
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+    }
+
+   
+
+    // C# property to retrieve save/load manager
+    public static LoadSaveManager StateManager
+    {
+        get
+        {
+            if (!statemanager)
+                statemanager = instance.GetComponent<LoadSaveManager>();
+
+            if (!statemanager)
+                statemanager = instance.gameObject.AddComponent<LoadSaveManager>();
+
+            return statemanager;
+        }
+    }
+
+    // Internal reference to single active instance of object - for singleton behaviour
+    private static GameManager instance = null;
+
+    // Internal reference to Saveload Game Manager
+    private static LoadSaveManager statemanager = null;
+
+    // Should load from save game state on level load, or just restart level from defaults
+    private static bool bShouldLoad = false;
+
+    // Called before Start on object creation
+    //void Awake()
+    //{
+    //    //Check if there is an existing instance of this object
+    //    if ((instance) && (instance.GetInstanceID() != GetInstanceID()))
+    //        Destroy(gameObject); //Delete duplicate
+    //    else
+    //    {
+    //        instance = this; //Make this object the only instance
+    //        DontDestroyOnLoad(gameObject); //Set as do not destroy
+    //    }
+    //}
+
+    // Restart Game
+    public void RestartGame()
+    {
+        // Load first level
+        SceneManager.LoadScene(1);
+    }
+
+    // Exit Game
+    public void ExitGame()
+    {
+        Application.Quit();
+    }
+
+    // Save Game
+    public void SaveGame()
+    {
+        // Print the path where the XML is save
+        Debug.Log(Application.persistentDataPath);
+
+        // Call save game functionality
+        StateManager.Save(Application.persistentDataPath + "/SaveGame.xml");
+    }
+
+    // Load Game
+    public void LoadGame()
+    {
+        StateManager.Load(Application.persistentDataPath + "/SaveGame.xml");
     }
 }

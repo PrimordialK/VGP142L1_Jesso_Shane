@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 6953141444021547888}
   - component: {fileID: 3874703871962393984}
   m_Layer: 0
-  m_Name: Rio
+  m_Name: Rio1
   m_TagString: Enemy
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

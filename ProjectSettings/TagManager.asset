@@ -8,6 +8,7 @@ TagManager:
   - Weapon
   - Shield
   - PowerUp
+  - DeathBall
   layers:
   - Default
   - TransparentFX

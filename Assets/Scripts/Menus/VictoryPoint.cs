@@ -1,18 +1,17 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class VictoryPoint : MonoBehaviour
 {
-    public VictoryMenu victoryMenu; // Assign in Inspector
-
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Trigger entered by: " + other.name);
-        // Check if the object entering is the player
         if (other.CompareTag("Player"))
         {
-            if (victoryMenu != null)
+            CanvasManager canvasManager = FindFirstObjectByType<CanvasManager>();
+            if (canvasManager != null)
             {
-                victoryMenu.ShowMenu();
+
+                SceneManager.LoadScene("Victory");
             }
         }
     }

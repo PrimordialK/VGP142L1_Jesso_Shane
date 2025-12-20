@@ -1,22 +1,21 @@
 using UnityEngine;
 
-
-
 public class PlayerController : MonoBehaviour
 {
     private CharacterController cc;
     private Camera mainCamera;
     private Animator anim;
 
-
     [SerializeField] public Transform weaponAttachPoint1; // Equipped weapon (e.g., hand)
     [SerializeField] public Transform weaponAttachPoint2; // Holstered weapon (e.g., back/hip)
 
+
+    public int health;
+    public float cash;
+    public bool collectWeapon;
+
     private WeaponBase equippedWeapon = null;
     private WeaponBase holsteredWeapon = null;
-
-    LayerMask weaponLayerMask;
-    LayerMask enemyLayerMask;
 
     private float curSpeed = 2.0f;
     [Header("Movement Settings")]
@@ -29,19 +28,16 @@ public class PlayerController : MonoBehaviour
     [SerializeField] public float jumpHeight = 2.0f;
     [SerializeField] private float timeToJumpApex = 0.4f;
 
-
+    public LayerMask weaponLayerMask;
+    public LayerMask enemyLayerMask;
     //Movement variables
     float gravity;
     float initialJumpVelocity;
-
 
     Vector2 direction; //direction of movement - no gravity is applied here
     Vector3 velocity;
 
     bool jumpPressed = false;
-
-    
-
 
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
@@ -77,10 +73,7 @@ public class PlayerController : MonoBehaviour
         InputManager.Instance.OnDefendEvent += OnDefend;
         InputManager.Instance.OnDeathEvent += OnDeath;
         InputManager.Instance.OnSwitchWeaponsEvent += OnSwitchWeapons;
-        
-
     }
-
 
     void OnValidate()
     {
@@ -114,7 +107,6 @@ public class PlayerController : MonoBehaviour
         //if (equippedWeapon != null)
         //    equippedWeapon.Shoot(); // If you want to keep this, but avoid double firing
     }
-    
 
     public bool IsDefending { get; private set; }
 
@@ -133,8 +125,6 @@ public class PlayerController : MonoBehaviour
 
         StartCoroutine(RestartGameAfterDeathAnimation());
     }
-
-
 
     private System.Collections.IEnumerator RestartGameAfterDeathAnimation()
     {
@@ -155,8 +145,9 @@ public class PlayerController : MonoBehaviour
 
         yield return new WaitForSeconds(deathAnimLength);
 
-        // Reload the scene after the death animation
-        GameManager.Instance.ReloadCurrentScene();
+        // Load from checkpoint after death
+        LoadSaveManager.Instance.Load("Checkpoint1.xml");
+        LoadGameComplete();
     }
 
     // Update is called once per frame
@@ -174,10 +165,6 @@ public class PlayerController : MonoBehaviour
 
         // Reset attack state after processing (or after a short time)
         IsAttacking = false;
-
-
-
-
     }
 
     void FixedUpdate()
@@ -187,7 +174,8 @@ public class PlayerController : MonoBehaviour
         UpdateCharacterVelocity(projectedMoveDir);
 
         cc.Move(velocity * Time.fixedDeltaTime);
-        anim.SetFloat("speed", curSpeed / maxSpeed);
+        if (anim != null)
+            anim.SetFloat("speed", curSpeed / maxSpeed);
 
         //apply rotation
         if (direction != Vector2.zero)
@@ -209,7 +197,6 @@ public class PlayerController : MonoBehaviour
 
         if (!cc.isGrounded) velocity.y += gravity * Time.fixedDeltaTime;
         else velocity.y = CheckJump();
-
     }
     private Vector3 ProjectedMoveDirection()
     {
@@ -256,8 +243,16 @@ public class PlayerController : MonoBehaviour
                 holsteredWeapon = weapon;
                 holsteredWeapon.Equip(GetComponent<Collider>(), weaponAttachPoint2);
             }
-            // Optionally: handle swapping if both slots are full
             Debug.Log($"Picked up a weapon! {weapon.name}");
+        }
+
+        if (hit.gameObject.CompareTag("DeathBall"))
+        {
+            GameManager.Instance.lives -= 1;
+            Debug.Log("Collided with DeathBall. Lost a life.");
+
+            // Add this line to trigger death
+            OnDeath();
         }
 
         // PowerUp logic...
@@ -286,5 +281,56 @@ public class PlayerController : MonoBehaviour
                 projectileScript.SetVelocity(velocity);
             }
         }
+    }
+    public void SaveGamePrepare()
+    {
+        // Get Player Data Object
+        LoadSaveManager.GameStateData.DataPlayer data = GameManager.StateManager.gameStateData.player;
+
+        // Fill in player data for save game
+        data.health = health;
+        data.cash = cash;
+        data.hasWeapon = collectWeapon;
+
+        data.transform.posX = transform.position.x;
+        data.transform.posY = transform.position.y;
+        data.transform.posZ = transform.position.z;
+        data.transform.rotX = transform.rotation.eulerAngles.x;
+        data.transform.rotY = transform.rotation.eulerAngles.y;
+        data.transform.rotZ = transform.rotation.eulerAngles.z;
+        data.transform.scaleX = transform.localScale.x;
+        data.transform.scaleY = transform.localScale.y;
+        data.transform.scaleZ = transform.localScale.z;
+    }
+
+    // Function called when loading is complete
+    public void LoadGameComplete()
+    {
+        // Get Player Data Object
+        LoadSaveManager.GameStateData.DataPlayer data = GameManager.StateManager.gameStateData.player;
+
+        //Load data back to Player
+        health = data.health;
+        cash = data.cash;
+        collectWeapon = data.hasWeapon;
+
+        //Give player weapon, activate and destroy weapon power-up
+        if (collectWeapon)
+        {
+            //Find weapon powerup in level
+            GameObject weapon = GameObject.Find("WeaponPowerUp01");
+
+            //Send OnTriggerEnter message
+            weapon.SendMessage("OnTriggerEnter2D", GetComponent<Collider2D>(), SendMessageOptions.DontRequireReceiver);
+        }
+
+        //Set position
+        transform.position = new Vector3(data.transform.posX, data.transform.posY, data.transform.posZ);
+
+        //Set rotation
+        transform.rotation = Quaternion.Euler(data.transform.rotX, data.transform.rotY, data.transform.rotZ);
+
+        //Set scale
+        transform.localScale = new Vector3(data.transform.scaleX, data.transform.scaleY, data.transform.scaleZ);
     }
 }
