@@ -39,6 +39,13 @@ public class PlayerController : MonoBehaviour
 
     bool jumpPressed = false;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip deathSound;
+    [SerializeField] private AudioClip respawnSound;
+    private AudioSource audioSource;
+
+    private bool isDead = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
@@ -65,6 +72,10 @@ public class PlayerController : MonoBehaviour
         //LayerMask.GetMask("Weapon") seems to be inconsistent (in testing it was pulling layer 64) - setting it directly works better
         weaponLayerMask = 6;
         enemyLayerMask = 3;
+
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
 
         InputManager.Instance.OnMoveEvent += OnMove;
         InputManager.Instance.OnJumpEvent += OnJump;
@@ -120,19 +131,24 @@ public class PlayerController : MonoBehaviour
 
     public void OnDeath()
     {
+        if (isDead) return;
+        isDead = true;
+
         if (anim != null)
             anim.SetTrigger("Death");
 
-        StartCoroutine(RestartGameAfterDeathAnimation());
+        if (deathSound != null)
+            audioSource.PlayOneShot(deathSound);
+
+        // Optionally, wait for the death animation to finish before destroying
+        StartCoroutine(DestroyAfterDeathAnimation());
     }
 
-    private System.Collections.IEnumerator RestartGameAfterDeathAnimation()
+    private System.Collections.IEnumerator DestroyAfterDeathAnimation()
     {
-        float deathAnimLength = 1.0f; // Default duration
-
+        float deathAnimLength = 1.0f;
         if (anim != null)
         {
-            // Find the "Death" animation clip length
             foreach (var clip in anim.runtimeAnimatorController.animationClips)
             {
                 if (clip.name == "Death")
@@ -142,12 +158,9 @@ public class PlayerController : MonoBehaviour
                 }
             }
         }
-
         yield return new WaitForSeconds(deathAnimLength);
-
-        // Load from checkpoint after death
-        LoadSaveManager.Instance.Load("Checkpoint1.xml");
-        LoadGameComplete();
+        Destroy(gameObject); 
+      
     }
 
     // Update is called once per frame

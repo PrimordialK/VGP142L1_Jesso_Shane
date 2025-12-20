@@ -12,17 +12,21 @@ PrefabInstance:
       propertyPath: m_Name
       value: Rio2  Variant
       objectReference: {fileID: 0}
+    - target: {fileID: 4132312772176831909, guid: 64b182395c0b6744a920c74bce3ece13, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8073086772555192299, guid: 64b182395c0b6744a920c74bce3ece13, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 106.7145
+      value: 78.51697
       objectReference: {fileID: 0}
     - target: {fileID: 8073086772555192299, guid: 64b182395c0b6744a920c74bce3ece13, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 14.075693
+      value: 15.64
       objectReference: {fileID: 0}
     - target: {fileID: 8073086772555192299, guid: 64b182395c0b6744a920c74bce3ece13, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 132.99628
+      value: 136.1833
       objectReference: {fileID: 0}
     - target: {fileID: 8073086772555192299, guid: 64b182395c0b6744a920c74bce3ece13, type: 3}
       propertyPath: m_LocalRotation.w
@@ -83,5 +87,7 @@ MonoBehaviour:
   pathIndex: 0
   distThreshold: 0.2
   redGizmoRadius: 1
-  itemDropPrefab: {fileID: 0}
+  itemDropPrefab: {fileID: 776552875479629072, guid: eac473f0a853a33419ff70a291db8874, type: 3}
+  deathSound: {fileID: 8300000, guid: a6dab14155a8d534e8a04a5b3ebc9763, type: 3}
   moveSpeed: 2
+  deathSound: {fileID: 0}

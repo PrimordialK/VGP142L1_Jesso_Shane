@@ -8,6 +8,8 @@ public class Enemy : MonoBehaviour
         Chase, Patrol
     }    
 
+    
+   
     //components
     NavMeshAgent agent;
     Transform target;
@@ -27,7 +29,18 @@ public class Enemy : MonoBehaviour
     [Header("Drop Settings")]
     [SerializeField] private GameObject itemDropPrefab; // Assign your item prefab in the Inspector
 
-    private bool isDead = false;
+    [Header("Audio")]
+    [SerializeField] private AudioClip deathSound;
+    private AudioSource audioSource;
+
+    
+
+    void Awake()
+    {
+        audioSource = GetComponent<AudioSource>();
+        if (audioSource == null)
+            audioSource = gameObject.AddComponent<AudioSource>();
+    }
 
     void Start()
     {
@@ -142,7 +155,9 @@ public class Enemy : MonoBehaviour
         }
 
         yield return new WaitForSeconds(deathAnimLength);
+        audioSource?.PlayOneShot(deathSound);
         Destroy(gameObject);
+        
     }
 }
 

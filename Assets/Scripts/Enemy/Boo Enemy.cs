@@ -9,6 +9,10 @@ public class BooEnemy : Enemy
     private float shootCooldown = 3.0f; // seconds between shots
     private float lastShootTime = -Mathf.Infinity;
 
+    [Header("Audio")]
+    [SerializeField] private AudioClip deathSound;
+    private AudioSource audioSource;
+
     void Start()
     {// base.Start();
         player = GameObject.FindGameObjectWithTag("Player")?.transform;
